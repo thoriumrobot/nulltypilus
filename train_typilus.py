@@ -4,10 +4,11 @@ from tensorflow.keras import Model
 import numpy as np
 import tensorflow as tf
 import logging
-from tdg_utils import load_tdg_data, preprocess_tdg, create_tf_dataset
+from tdg_utils import load_tdg_data, preprocess_tdg, create_tf_dataset, name_mapping, type_name_mapping
 from sklearn.model_selection import train_test_split  # Missing import added
 import sys
 import os
+import pickle
 
 class BooleanMaskLayer(tf.keras.layers.Layer):
     def call(self, inputs):
@@ -93,6 +94,18 @@ def main(json_output_dir, model_output_path, batch_size):
     early_stopping = EarlyStopping(monitor='val_loss', patience=25, mode='min')
 
     history = model.fit(train_dataset, epochs=50, validation_data=val_dataset, callbacks=[checkpoint, early_stopping])
+    
+    # Call this function at the end of training
+    save_mappings(os.path.join(os.path.dirname(model_output_path), 'mappings.pkl'))
+
+def save_mappings(output_path):
+    mappings = {
+        'name_mapping': dict(name_mapping),
+        'type_name_mapping': dict(type_name_mapping)
+    }
+    with open(output_path, 'wb') as f:
+        pickle.dump(mappings, f)
+    logging.info(f"Saved mappings to {output_path}")
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:

@@ -4,7 +4,8 @@ import numpy as np
 from tensorflow.keras.models import load_model
 import logging
 import tensorflow as tf
-from tdg_utils import preprocess_tdg, process_java_file, create_combined_tdg, NodeIDMapper, node_id_mapper
+from tdg_utils import preprocess_tdg, process_java_file, create_combined_tdg, NodeIDMapper, node_id_mapper, name_mapping, type_name_mapping
+import pickle
 
 class BooleanMaskLayer(tf.keras.layers.Layer):
     def call(self, inputs):
@@ -126,10 +127,21 @@ def process_project(project_dir, model, output_dir):
 
 def main(project_dir, model_path, output_dir):
     model = load_model(model_path, custom_objects={'BooleanMaskLayer': BooleanMaskLayer})
+    load_mappings(os.path.join(os.path.dirname(model_path), 'mappings.pkl'))
+    
     node_id_mapper = NodeIDMapper()  # Initialize a new NodeIDMapper
 
     # Process the entire project
     process_project(project_dir, model, output_dir)
+
+# Load the mappings at the start of the prediction process
+def load_mappings(mapping_file):
+    global name_mapping, type_name_mapping
+    with open(mapping_file, 'rb') as f:
+        mappings = pickle.load(f)
+        name_mapping = defaultdict(lambda: len(mappings['name_mapping']), mappings['name_mapping'])
+        type_name_mapping = defaultdict(lambda: len(mappings['type_name_mapping']), mappings['type_name_mapping'])
+    logging.info(f"Loaded mappings from {mapping_file}")
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:

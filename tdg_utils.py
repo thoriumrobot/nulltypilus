@@ -43,6 +43,9 @@ class NodeIDMapper:
 
 node_id_mapper = NodeIDMapper()
 
+name_mapping = defaultdict(lambda: len(name_mapping))
+type_name_mapping = defaultdict(lambda: len(type_name_mapping))
+
 def split_identifier(name):
     return re.findall(r'[a-z]+|[A-Z][a-z]*|[0-9]+', name)
 
@@ -52,8 +55,6 @@ def extract_features(attr):
         return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
     type_mapping = {'class': 0, 'method': 1, 'field': 2, 'parameter': 3, 'variable': 4, 'literal': 5, 'file': 6, 'return': 7}
-    name_mapping = defaultdict(lambda: len(name_mapping))
-    type_name_mapping = defaultdict(lambda: len(type_name_mapping))
 
     node_type = attr.get('type', '')
     node_name = attr.get('name', '')
@@ -285,13 +286,13 @@ def pad_batch(features, labels, node_ids, adjacency_matrix, prediction_node_ids,
     num_nodes = min(combined_features.shape[0], max_nodes)
 
     # Adjust adjacency matrix
-    combined_adj_matrix = np.zeros((num_nodes, num_nodes), dtype=np.float32)
+    combined_adj_matrix = np.zeros((max_nodes, max_nodes), dtype=np.float32)
     offset = 0
     for adj in adjacency_matrix:
         size = adj.shape[0]
         if offset + size > max_nodes:
             break  # Stop if adding this adjacency matrix would exceed max_nodes
-        combined_adj_matrix[offset:offset + size, offset:offset + size] = adj
+        combined_adj_matrix[offset:offset + size, offset:offset + size] = adj[offset:offset + size, offset:offset + size]
         offset += size
 
     # Apply the padding to the final batch
