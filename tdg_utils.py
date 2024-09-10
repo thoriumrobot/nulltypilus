@@ -371,6 +371,7 @@ def preprocess_tdg(tdg):
             from_id = node_id_map[from_node]
             to_id = node_id_map[to_node]
             adjacency_matrix[from_id, to_id] = 1.0
+            adjacency_matrix[to_id, from_id] = 1.0
     
     features = np.array(features, dtype=np.float32)
     adjacency_matrix = np.array(adjacency_matrix, dtype=np.float32)
