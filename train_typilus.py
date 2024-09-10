@@ -23,35 +23,47 @@ def typilus_loss(y_true, y_pred):
     return classification_loss  
 
 def build_typilus_model(input_dim, max_nodes):
+    # Input layers for node features, adjacency matrix, and prediction mask
     node_features_input = Input(shape=(max_nodes, input_dim), name="node_features")
     adj_input = Input(shape=(max_nodes, max_nodes), name="adjacency_matrix")
     prediction_mask = Input(shape=(max_nodes,), dtype=tf.bool, name="prediction_mask")
 
     def message_passing(x, adj):
+        # Perform message passing by multiplying adjacency matrix with node features
         message = tf.matmul(adj, x)
         return message
 
+    # Initial message passing
     x = Lambda(lambda inputs: message_passing(inputs[0], inputs[1]))([node_features_input, adj_input])
+    
+    # First GRU layer for message passing update
     x = GRU(256, return_sequences=True)(x)
     x = Dropout(0.2)(x)
     
+    # Second message passing and GRU layer
+    x = Lambda(lambda inputs: message_passing(inputs[0], inputs[1]))([x, adj_input])
+    x = GRU(256, return_sequences=True)(x)
+    x = Dropout(0.2)(x)
+    
+    # Third message passing and GRU layer
     x = Lambda(lambda inputs: message_passing(inputs[0], inputs[1]))([x, adj_input])
     x = GRU(128, return_sequences=True)(x)
     x = Dropout(0.2)(x)
-    
-    x = Lambda(lambda inputs: message_passing(inputs[0], inputs[1]))([x, adj_input])
-    x = GRU(64, return_sequences=True)(x)
+
+    # Final dense layer
+    x = Dense(64, activation='relu')(x)
     x = Dropout(0.2)(x)
     
-    x = Dense(32, activation='relu')(x)
-    x = Dropout(0.2)(x)
-    
+    # Output layer with sigmoid activation
     output = Dense(1, activation='sigmoid', kernel_regularizer=tf.keras.regularizers.l2(0.01))(x)
 
+    # Mask the output based on the prediction mask
     masked_output = BooleanMaskLayer()([output, prediction_mask])
 
+    # Create the model
     model = Model(inputs=[node_features_input, adj_input, prediction_mask], outputs=masked_output)
 
+    # Compile the model with Adam optimizer and the custom loss function
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
     model.compile(optimizer=optimizer, loss=typilus_loss, metrics=['accuracy'])
 
