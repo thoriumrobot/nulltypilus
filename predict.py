@@ -7,6 +7,7 @@ import tensorflow as tf
 from tdg_utils import preprocess_tdg, process_java_file, create_combined_tdg, NodeIDMapper, node_id_mapper, name_mapping, type_name_mapping
 import pickle
 import keras
+from train_typilus import build_typilus_model
 
 keras.config.enable_unsafe_deserialization()
 
@@ -129,8 +130,16 @@ def process_project(project_dir, model, output_dir):
     logging.info(f"Annotation complete for project {project_dir}")
 
 def main(project_dir, model_path, output_dir):
-    model = load_model(model_path, custom_objects={'BooleanMaskLayer': BooleanMaskLayer})
+    # Load mappings
     load_mappings(os.path.join(os.path.dirname(model_path), 'mappings.pkl'))
+    
+    # Define the model architecture with the correct output shape in Lambda layers
+    max_nodes = 8000
+    input_dim = 6  # Assumes the input dimension is known
+    model = build_typilus_model(input_dim, max_nodes)
+
+    # Load the trained weights into the model
+    model.load_weights(model_path)  # Load the trained weights from file
     
     node_id_mapper = NodeIDMapper()  # Initialize a new NodeIDMapper
 

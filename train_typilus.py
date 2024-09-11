@@ -35,19 +35,22 @@ def build_typilus_model(input_dim, max_nodes):
         return message
 
     # Initial message passing
-    x = Lambda(lambda inputs: message_passing(inputs[0], inputs[1]))([node_features_input, adj_input])
+    x = Lambda(lambda inputs: message_passing(inputs[0], inputs[1]),
+               output_shape=(max_nodes, input_dim))([node_features_input, adj_input])
     
     # First GRU layer for message passing update
     x = GRU(256, return_sequences=True)(x)
     x = Dropout(0.2)(x)
     
     # Second message passing and GRU layer
-    x = Lambda(lambda inputs: message_passing(inputs[0], inputs[1]))([x, adj_input])
+    x = Lambda(lambda inputs: message_passing(inputs[0], inputs[1]),
+               output_shape=(max_nodes, 256))([x, adj_input])
     x = GRU(256, return_sequences=True)(x)
     x = Dropout(0.2)(x)
     
     # Third message passing and GRU layer
-    x = Lambda(lambda inputs: message_passing(inputs[0], inputs[1]))([x, adj_input])
+    x = Lambda(lambda inputs: message_passing(inputs[0], inputs[1]),
+               output_shape=(max_nodes, 256))([x, adj_input])
     x = GRU(128, return_sequences=True)(x)
     x = Dropout(0.2)(x)
 
