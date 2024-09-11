@@ -290,7 +290,7 @@ def pad_batch(features, labels, node_ids, adjacency_matrix, prediction_node_ids,
     offset = 0
     for adj in adjacency_matrix:
         size = adj.shape[0]
-        if size < 1:
+        if adj[offset:offset + size, offset:offset + size].shape[0] < combined_adj_matrix[offset:offset + size, offset:offset + size].shape[0]:
             continue
         if offset + size > max_nodes:
             break  # Stop if adding this adjacency matrix would exceed max_nodes
