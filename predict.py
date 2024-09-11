@@ -6,6 +6,9 @@ import logging
 import tensorflow as tf
 from tdg_utils import preprocess_tdg, process_java_file, create_combined_tdg, NodeIDMapper, node_id_mapper, name_mapping, type_name_mapping
 import pickle
+import keras
+
+keras.config.enable_unsafe_deserialization()
 
 class BooleanMaskLayer(tf.keras.layers.Layer):
     def call(self, inputs):
