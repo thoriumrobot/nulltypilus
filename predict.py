@@ -8,6 +8,7 @@ from tdg_utils import preprocess_tdg, process_java_file, create_combined_tdg, No
 import pickle
 import keras
 from train_typilus import build_typilus_model
+from collections import defaultdict
 
 keras.config.enable_unsafe_deserialization()
 
